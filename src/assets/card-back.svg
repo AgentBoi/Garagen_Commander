@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 420">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#241b12" />
+      <stop offset="50%" stop-color="#2d2320" />
+      <stop offset="100%" stop-color="#1a1410" />
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.4" r="0.6">
+      <stop offset="0%" stop-color="#d3b07a" stop-opacity="0.35" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+    </radialGradient>
+    <pattern id="runes" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="4" cy="4" r="1" fill="#c9a36b" fill-opacity="0.35" />
+      <path d="M12 2 L14 6 L12 10 L10 6 Z" fill="#7d5b3a" fill-opacity="0.3" />
+      <circle cx="20" cy="20" r="1" fill="#c9a36b" fill-opacity="0.2" />
+    </pattern>
+  </defs>
+  <rect width="300" height="420" rx="18" fill="url(#bg)" />
+  <rect width="300" height="420" rx="18" fill="url(#glow)" />
+  <rect x="18" y="22" width="264" height="376" rx="16" fill="none" stroke="#c9a36b" stroke-opacity="0.35" stroke-width="2" />
+  <rect x="34" y="40" width="232" height="340" rx="14" fill="url(#runes)" opacity="0.25" />
+  <circle cx="150" cy="210" r="88" fill="none" stroke="#c9a36b" stroke-opacity="0.3" stroke-width="2" />
+  <circle cx="150" cy="210" r="56" fill="none" stroke="#7d5b3a" stroke-opacity="0.45" stroke-width="2" />
+  <path d="M150 132 L174 210 L150 288 L126 210 Z" fill="#c9a36b" fill-opacity="0.4" />
+  <path d="M150 150 L162 210 L150 270 L138 210 Z" fill="#15110d" fill-opacity="0.6" />
+  <path d="M150 94 L168 132 L150 170 L132 132 Z" fill="#c9a36b" fill-opacity="0.35" />
+</svg>

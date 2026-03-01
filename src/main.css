@@ -1,0 +1,16 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #0b0d12;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+img {
+  display: block;
+}
