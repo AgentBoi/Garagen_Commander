@@ -1,89 +1,24 @@
 import { useEffect, useMemo, useState } from 'react'
 import './App.css'
+import HomeScreen from './screens/HomeScreen'
+import NewGameScreen from './screens/NewGameScreen'
+import RdmCmdScreen from './screens/RdmCmdScreen'
+import SummaryScreen from './screens/SummaryScreen'
+import HistoryScreen from './screens/HistoryScreen'
+import ColorBanScreen from './screens/ColorBanScreen'
+import MonoBanScreen from './screens/MonoBanScreen'
+import PartnerModal from './components/PartnerModal'
+import OptionsModal from './components/OptionsModal'
+import { emptySlots, shuffle, getCardImage } from './utils/cardUtils'
+import { getPartnerInfo, fetchPartnerOptions } from './utils/partnerUtils'
+import whiteMana from './assets/mana_symbols/white_mana.png'
+import blueMana from './assets/mana_symbols/blue_mana.png'
+import blackMana from './assets/mana_symbols/black_mana.png'
+import redMana from './assets/mana_symbols/red_mana.png'
+import greenMana from './assets/mana_symbols/green_mana.png'
+import colorlessMana from './assets/mana_symbols/colorless_mana.png'
 
 const STORAGE_KEY = 'random-commander-history-v1'
-
-const emptySlots = () =>
-  Array.from({ length: 3 }, () => ({ status: 'hidden', card: null }))
-
-const shuffle = (list) => {
-  const copy = [...list]
-  for (let i = copy.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[copy[i], copy[j]] = [copy[j], copy[i]]
-  }
-  return copy
-}
-
-const getCardImage = (card) => {
-  if (!card) return null
-  if (card.image_uris?.normal) return card.image_uris.normal
-  const face = card.card_faces?.find((item) => item.image_uris?.normal)
-  return face?.image_uris?.normal ?? null
-}
-
-const getOracleText = (card) => {
-  if (!card) return ''
-  if (card.oracle_text) return card.oracle_text
-  if (card.card_faces) {
-    return card.card_faces.map((face) => face.oracle_text || '').join('\n')
-  }
-  return ''
-}
-
-const getTypeLine = (card) => (card?.type_line ? card.type_line : '')
-
-const normalizePartnerWithName = (name) =>
-  name
-    .replace(/\s*\([^)]*\)\s*$/, '')
-    .replace(/[.]+$/, '')
-    .trim()
-
-const getPartnerInfo = (card) => {
-  const oracle = getOracleText(card)
-  if (!oracle) return null
-  const partnerWith = oracle.match(/Partner with ([^\n]+)/i)
-  if (partnerWith) {
-    return { type: 'partner-with', name: partnerWith[1].trim() }
-  }
-  const partnerDash = oracle.match(/Partner\s*[—-]\s*([^\n]+)/i)
-  if (partnerDash) {
-    return { type: 'partner-dash', label: partnerDash[1].trim() }
-  }
-  if (/Choose a Background/i.test(oracle)) {
-    return { type: 'choose-background' }
-  }
-  if (/Doctor's companion/i.test(oracle)) {
-    return { type: 'doctors-companion' }
-  }
-  if (/Friends forever/i.test(oracle)) {
-    return { type: 'friends-forever' }
-  }
-  if (/\bPartner\b/i.test(oracle)) {
-    return { type: 'partner' }
-  }
-  if (/Time Lord Doctor/i.test(getTypeLine(card))) {
-    return { type: 'time-lord-doctor' }
-  }
-  return null
-}
-
-const fetchAllCards = async (query) => {
-  const results = []
-  let url = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(
-    query
-  )}&unique=cards`
-  while (url) {
-    const response = await fetch(url)
-    const data = await response.json()
-    if (!response.ok) {
-      throw new Error(data?.details || 'Failed to fetch cards.')
-    }
-    results.push(...data.data)
-    url = data.has_more ? data.next_page : null
-  }
-  return results
-}
 
 export default function App() {
   const [screen, setScreen] = useState('home')
@@ -93,6 +28,13 @@ export default function App() {
   const [history, setHistory] = useState([])
   const [optionsOpen, setOptionsOpen] = useState(false)
   const [partnerOnly, setPartnerOnly] = useState(false)
+  const [colorBans, setColorBans] = useState(false)
+  const [monoChoiceEnabled, setMonoChoiceEnabled] = useState(false)
+  const [rerollsEnabled, setRerollsEnabled] = useState(true)
+  const [colorBanIndex, setColorBanIndex] = useState(0)
+  const [playerBans, setPlayerBans] = useState({})
+  const [monoBanIndex, setMonoBanIndex] = useState(0)
+  const [playerMonoBans, setPlayerMonoBans] = useState({})
 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [slots, setSlots] = useState(emptySlots)
@@ -174,6 +116,22 @@ export default function App() {
 
   const startDraft = () => {
     if (players.length === 0) return
+    if (colorBans) {
+      setPlayerBans({})
+      setColorBanIndex(0)
+      if (monoChoiceEnabled) {
+        setPlayerMonoBans({})
+        setMonoBanIndex(0)
+      }
+      setScreen('color-bans')
+      return
+    }
+    if (monoChoiceEnabled) {
+      setPlayerMonoBans({})
+      setMonoBanIndex(0)
+      setScreen('mono-bans')
+      return
+    }
     setScreen('draft')
   }
 
@@ -181,22 +139,41 @@ export default function App() {
     setPlayers((prev) => shuffle(prev))
   }
 
-  const getCommanderQuery = () => {
+  const getCommanderQuery = (bans) => {
     const baseQuery = 'is:commander legal:commander'
-    if (!partnerOnly) return baseQuery
-    return [
-      baseQuery,
-      '(',
-      'o:"Partner with"',
-      'or o:"Partner—"',
-      'or o:"Partner -"',
-      'or o:"Partner"',
-      'or o:"Choose a Background"',
-      'or o:"Friends forever"',
-      'or o:"Doctor\'s companion"',
-      'or type:"time lord doctor"',
-      ')',
-    ].join(' ')
+    const filters = []
+    if (partnerOnly) {
+      filters.push(
+        '(',
+        'o:"Partner with"',
+        'or o:"Partner—"',
+        'or o:"Partner -"',
+        'or o:"Partner"',
+        'or o:"Choose a Background"',
+        'or o:"Friends forever"',
+        'or o:"Doctor\'s companion"',
+        'or type:"time lord doctor"',
+        ')'
+      )
+    }
+
+    if (bans && bans.length) {
+      const bannedSet = new Set(bans)
+      const allColors = ['W', 'U', 'B', 'R', 'G']
+      const allowed = allColors.filter((color) => !bannedSet.has(color))
+
+      if (allowed.length === 0) {
+        filters.push('id<=0')
+      } else {
+        filters.push(`id<=${allowed.join('')}`)
+      }
+
+      if (bannedSet.has('C')) {
+        filters.push('-c:c')
+      }
+    }
+
+    return [baseQuery, ...filters].join(' ')
   }
 
   const revealCard = async (index) => {
@@ -208,9 +185,15 @@ export default function App() {
     )
 
     try {
+      const activeBans = colorBans
+        ? playerBans[currentPlayer?.id] ?? []
+        : []
+      const activeMonoBan = monoChoiceEnabled
+        ? playerMonoBans[currentPlayer?.id] ?? false
+        : false
       const response = await fetch(
         `https://api.scryfall.com/cards/random?q=${encodeURIComponent(
-          getCommanderQuery()
+          getCommanderQuery(activeBans) + (activeMonoBan ? ' -id<=1' : '')
         )}`
       )
       if (!response.ok) {
@@ -243,74 +226,6 @@ export default function App() {
       setSelectedPartner(null)
       setPartnerCard(slot.card)
     }
-  }
-
-  const fetchPartnerOptions = async (card) => {
-    const info = getPartnerInfo(card)
-    if (!info) return []
-
-    if (info.type === 'partner-with') {
-      const targetName = normalizePartnerWithName(info.name)
-      const response = await fetch(
-        `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(
-          targetName
-        )}`
-      )
-      const data = await response.json()
-      if (!response.ok) {
-        const fallback = await fetch(
-          `https://api.scryfall.com/cards/named?fuzzy=${encodeURIComponent(
-            targetName
-          )}`
-        )
-        const fallbackData = await fallback.json()
-        if (
-          !fallback.ok ||
-          !fallbackData?.name ||
-          fallbackData.name.toLowerCase() !== targetName.toLowerCase()
-        ) {
-          throw new Error(fallbackData?.details || 'Failed to fetch partner.')
-        }
-        return [fallbackData]
-      }
-      return [data]
-    }
-
-    if (info.type === 'partner-dash') {
-      const label = info.label.replace(/"/g, '')
-      if (/friends\s+forever/i.test(label)) {
-        return fetchAllCards('o:"Friends forever"')
-      }
-      return fetchAllCards(
-        `o:"Partner—${label}" or o:"Partner - ${label}" is:commander`
-      )
-    }
-
-    if (info.type === 'choose-background') {
-      return fetchAllCards('type:background is:commander')
-    }
-
-    if (info.type === 'doctors-companion') {
-      return fetchAllCards('type:"time lord doctor" is:commander')
-    }
-
-    if (info.type === 'time-lord-doctor') {
-      return fetchAllCards('o:"Doctor\'s companion" is:commander')
-    }
-
-    if (info.type === 'friends-forever') {
-      try {
-        return await fetchAllCards('o:"Friends forever"')
-      } catch {
-        return fetchAllCards('oracle:"Friends forever"')
-      }
-    }
-
-    if (info.type === 'partner') {
-      return fetchAllCards('o:"Partner" -o:"Partner with" -o:"Partner—" is:commander')
-    }
-
-    return []
   }
 
   const openPartnerModal = async (card) => {
@@ -389,15 +304,86 @@ export default function App() {
     setFlippedPartners((prev) => ({ ...prev, [key]: !prev[key] }))
   }
 
+  const handleToggleColorBan = (color) => {
+    const player = players[colorBanIndex]
+    if (!player) return
+    setPlayerBans((prev) => {
+      const current = prev[player.id] ?? []
+      if (current.includes(color)) {
+        return {
+          ...prev,
+          [player.id]: current.filter((item) => item !== color),
+        }
+      }
+      if (current.length >= 2) return prev
+      return {
+        ...prev,
+        [player.id]: [...current, color],
+      }
+    })
+  }
+
+  const confirmColorBans = () => {
+    if (colorBanIndex >= players.length - 1) {
+      if (monoChoiceEnabled) {
+        setMonoBanIndex(0)
+        setScreen('mono-bans')
+        return
+      }
+      setScreen('draft')
+      return
+    }
+    setColorBanIndex((prev) => prev + 1)
+  }
+
+  const handleSetMonoBanned = (value) => {
+    const player = players[monoBanIndex]
+    if (!player) return
+    setPlayerMonoBans((prev) => ({
+      ...prev,
+      [player.id]: value,
+    }))
+  }
+
+  const confirmMonoBans = () => {
+    if (monoBanIndex >= players.length - 1) {
+      setScreen('draft')
+      return
+    }
+    setMonoBanIndex((prev) => prev + 1)
+  }
+
+  const colorBanPlayer = colorBans ? players[colorBanIndex] : null
+  const colorBanSelections = colorBanPlayer
+    ? playerBans[colorBanPlayer.id] ?? []
+    : []
+  const monoBanPlayer = monoChoiceEnabled ? players[monoBanIndex] : null
+  const monoBanSelection = monoBanPlayer
+    ? playerMonoBans[monoBanPlayer.id] ?? false
+    : false
+  const manaAssets = {
+    W: whiteMana,
+    U: blueMana,
+    B: blackMana,
+    R: redMana,
+    G: greenMana,
+    C: colorlessMana,
+  }
+
   return (
     <div className="app">
       <header className="topbar">
-        <div className="brand">
+        <button
+          className="brand"
+          type="button"
+          onClick={() => setScreen('home')}
+          aria-label="Go to home"
+        >
           <div>
             <p className="eyebrow">Magic: The Gathering</p>
             <h1>Garagen Commander</h1>
           </div>
-        </div>
+        </button>
         {screen !== 'home' && (
           <button className="ghost" onClick={() => setScreen('home')}>
             Back to start
@@ -406,390 +392,115 @@ export default function App() {
       </header>
 
       {screen === 'home' && (
-        <section className="panel hero">
-          <div>
-            <h2>Random Commander</h2>
-            <p>
-              Each player chooses one of three commanders revealed at random.
-            </p>
-          </div>
-          <div className="actions">
-            <button className="primary" onClick={() => setScreen('new')}>
-              New game
-            </button>
-            <button
-              className="secondary"
-              onClick={() => setScreen('history')}
-            >
-              Previous rounds
-            </button>
-          </div>
-        </section>
+        <HomeScreen
+          onNewGame={() => setScreen('new')}
+          onHistory={() => setScreen('history')}
+        />
       )}
 
       {screen === 'new' && (
-        <section className="panel">
-          <div className="panel-header">
-            <div>
-              <h2>Add players</h2>
-              <p>Drag to reorder. Top player goes first.</p>
-            </div>
-            <div className="inline-actions">
-              <button className="ghost" onClick={() => setOptionsOpen(true)}>
-                Options
-              </button>
-              <button className="ghost" onClick={randomizeOrder}>
-                Randomize order
-              </button>
-            </div>
-          </div>
-
-          <div className="add-row">
-            <input
-              type="text"
-              placeholder="Player name"
-              value={nameInput}
-              onChange={(event) => setNameInput(event.target.value)}
-            />
-            <button className="icon" onClick={addPlayer}>
-              +
-            </button>
-          </div>
-
-          <ul className="player-list">
-            {players.map((player, index) => (
-              <li
-                key={player.id}
-                draggable
-                onDragStart={() => onDragStart(index)}
-                onDragOver={(event) => event.preventDefault()}
-                onDrop={() => onDrop(index)}
-              >
-                <span className="drag">::</span>
-                <span>{player.name}</span>
-                <button className="ghost" onClick={() => removePlayer(player.id)}>
-                  Remove
-                </button>
-              </li>
-            ))}
-          </ul>
-
-          <div className="actions">
-            <button className="primary" onClick={startDraft} disabled={!players.length}>
-              Ready
-            </button>
-          </div>
-        </section>
+        <NewGameScreen
+          nameInput={nameInput}
+          onNameChange={setNameInput}
+          onAddPlayer={addPlayer}
+          players={players}
+          onDragStart={onDragStart}
+          onDrop={onDrop}
+          onRemovePlayer={removePlayer}
+          onOpenOptions={() => setOptionsOpen(true)}
+          onRandomize={randomizeOrder}
+          onReady={startDraft}
+          canReady={Boolean(players.length)}
+        />
       )}
 
-      {screen === 'draft' && currentPlayer && (
-        <section className="panel">
-          <div className="panel-header">
-            <div>
-              <h2>{currentPlayer.name}</h2>
-              <p>Tap a sigil to reveal a Commander.</p>
-            </div>
-            <div className="turn">Player {currentIndex + 1} of {players.length}</div>
-          </div>
+      {screen === 'color-bans' && colorBanPlayer && (
+        <ColorBanScreen
+          player={colorBanPlayer}
+          selectedColors={colorBanSelections}
+          onToggleColor={handleToggleColorBan}
+          onConfirm={confirmColorBans}
+          assets={manaAssets}
+          remainingPlayers={players.length - colorBanIndex}
+        />
+      )}
 
-          {error && <p className="error">{error}</p>}
+      {screen === 'mono-bans' && monoBanPlayer && (
+        <MonoBanScreen
+          player={monoBanPlayer}
+          monoBanned={monoBanSelection}
+          onSetMonoBanned={handleSetMonoBanned}
+          onConfirm={confirmMonoBans}
+          remainingPlayers={players.length - monoBanIndex}
+        />
+      )}
 
-          <div className="card-row">
-            {slots.map((slot, index) => {
-              const image = getCardImage(slot.card)
-              const slotPartnerInfo = getPartnerInfo(slot.card)
-              const classes = ['card-slot']
-              if (slot.status === 'loading') classes.push('loading')
-              if (slot.status === 'revealed') classes.push('revealed')
-              if (selectedIndex === index) classes.push('selected')
-              let backLabel = 'Tap to reveal'
-              if (slot.status === 'loading') backLabel = 'Summoning'
-              if (slot.status === 'error') backLabel = 'Error'
-              return (
-                <div className="card-stack" key={`slot-${index}`}>
-                  <button
-                    className={classes.join(' ')}
-                    onClick={() => handleSlotClick(index)}
-                    type="button"
-                  >
-                    <div className="card-flip">
-                      <div className="card-face card-back">
-                        <span>{backLabel}</span>
-                      </div>
-                      <div className="card-face card-front">
-                        {slot.status === 'revealed' && image && (
-                          <img src={image} alt={slot.card?.name ?? 'Commander'} />
-                        )}
-                        {slot.status === 'revealed' && !image && (
-                          <span>{slot.card?.name}</span>
-                        )}
-                      </div>
-                    </div>
-                  </button>
-                  <div className="card-tools">
-                    <button
-                      className="reroll"
-                      onClick={() => rerollSlot(index)}
-                      aria-label="Reroll this card"
-                      type="button"
-                    >
-                      <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path
-                          d="M20 12a8 8 0 1 1-2.35-5.65"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                        />
-                        <path
-                          d="M20 5v5h-5"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </button>
-                    {slot.status === 'revealed' && slotPartnerInfo && (
-                      <button
-                        className="partner"
-                        onClick={() => openPartnerModal(slot.card)}
-                        aria-label="Choose partner"
-                        type="button"
-                      >
-                        !
-                      </button>
-                    )}
-                  </div>
-                  {selectedIndex === index && selectedPartner && (
-                    <div className="partner-selected">
-                      + {selectedPartner.name}
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-
-          <div className="actions">
-            <button className="primary" onClick={confirmPick} disabled={!canConfirm}>
-              Select Commander
-            </button>
-          </div>
-        </section>
+      {screen === 'draft' && (
+        <RdmCmdScreen
+          currentPlayer={currentPlayer}
+          currentIndex={currentIndex}
+          totalPlayers={players.length}
+          error={error}
+          slots={slots}
+          selectedIndex={selectedIndex}
+          selectedPartner={selectedPartner}
+          onSlotClick={handleSlotClick}
+          onReroll={rerollSlot}
+          onOpenPartnerModal={openPartnerModal}
+          onConfirmPick={confirmPick}
+          canConfirm={canConfirm}
+          getCardImage={getCardImage}
+          getPartnerInfo={getPartnerInfo}
+          rerollsEnabled={rerollsEnabled}
+        />
       )}
 
       {screen === 'summary' && (
-        <section className="panel">
-          <div className="panel-header">
-            <div>
-              <h2>Commanders chosen</h2>
-              <p>Every player stands with their legend.</p>
-            </div>
-            <button className="ghost" onClick={() => setScreen('history')}>
-              View all rounds
-            </button>
-          </div>
-          <div className="summary-grid">
-            {summaryPicks.map((pick) => (
-              <div className="summary-card" key={pick.player.id}>
-                <h3>{pick.player.name}</h3>
-                <div
-                  className={`summary-images${
-                    flippedPartners[`current-${pick.player.id}`]
-                      ? ' is-flipped'
-                      : ''
-                  }`}
-                >
-                  <img
-                    className="summary-main"
-                    src={getCardImage(pick.card)}
-                    alt={pick.card?.name ?? 'Commander'}
-                  />
-                  {pick.partnerCard && (
-                    <>
-                      <img
-                        className="summary-partner"
-                        src={getCardImage(pick.partnerCard)}
-                        alt={pick.partnerCard?.name ?? 'Partner'}
-                      />
-                      <button
-                        className="summary-toggle"
-                        type="button"
-                        aria-label="Swap commander display"
-                        onClick={() =>
-                          togglePartnerView(`current-${pick.player.id}`)
-                        }
-                      >
-                        <i className="bi bi-arrow-repeat" aria-hidden="true" />
-                      </button>
-                    </>
-                  )}
-                </div>
-                <p>{pick.card?.name}</p>
-                {pick.partnerCard && <p>+ {pick.partnerCard?.name}</p>}
-              </div>
-            ))}
-          </div>
-        </section>
+        <SummaryScreen
+          picks={summaryPicks}
+          flippedPartners={flippedPartners}
+          onTogglePartnerView={togglePartnerView}
+          getCardImage={getCardImage}
+          onViewHistory={() => setScreen('history')}
+        />
       )}
 
       {screen === 'history' && (
-        <section className="panel">
-          <div className="panel-header">
-            <div>
-              <h2>Previous rounds</h2>
-              <p>All the Commander drafts you have started.</p>
-            </div>
-            <button className="ghost" onClick={() => setScreen('new')}>
-              Start new round
-            </button>
-          </div>
-
-          {historyEmpty && <p>No rounds yet. Start the first ritual.</p>}
-
-          <div className="history-list">
-            {history.map((round) => (
-              <div className="history-round" key={round.id}>
-                <div className="round-meta">
-                  <span>Round</span>
-                  <span>
-                    {new Date(round.startedAt).toLocaleString('en-US', {
-                      dateStyle: 'medium',
-                      timeStyle: 'short',
-                    })}
-                  </span>
-                </div>
-                <div className="summary-grid">
-                  {round.picks.map((pick) => (
-                    <div className="summary-card" key={pick.player.id}>
-                      <h3>{pick.player.name}</h3>
-                      <div
-                        className={`summary-images${
-                          flippedPartners[`${round.id}-${pick.player.id}`]
-                            ? ' is-flipped'
-                            : ''
-                        }`}
-                      >
-                        <img
-                          className="summary-main"
-                          src={getCardImage(pick.card)}
-                          alt={pick.card?.name ?? 'Commander'}
-                        />
-                        {pick.partnerCard && (
-                          <>
-                            <img
-                              className="summary-partner"
-                              src={getCardImage(pick.partnerCard)}
-                              alt={pick.partnerCard?.name ?? 'Partner'}
-                            />
-                            <button
-                              className="summary-toggle"
-                              type="button"
-                              aria-label="Swap commander display"
-                              onClick={() =>
-                                togglePartnerView(
-                                  `${round.id}-${pick.player.id}`
-                                )
-                              }
-                            >
-                              <i className="bi bi-arrow-repeat" aria-hidden="true" />
-                            </button>
-                          </>
-                        )}
-                      </div>
-                      <p>{pick.card?.name}</p>
-                      {pick.partnerCard && <p>+ {pick.partnerCard?.name}</p>}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+        <HistoryScreen
+          history={history}
+          historyEmpty={historyEmpty}
+          flippedPartners={flippedPartners}
+          onTogglePartnerView={togglePartnerView}
+          getCardImage={getCardImage}
+          onStartNewRound={() => setScreen('new')}
+        />
       )}
 
       {partnerModalOpen && (
-        <div className="modal-backdrop">
-          <div className="modal">
-            <div className="modal-header">
-              <div>
-                <h2>Choose a partner</h2>
-                <p>{partnerCard?.name}</p>
-              </div>
-              <button className="ghost" onClick={closePartnerModal}>
-                Close
-              </button>
-            </div>
-            {partnerLoading && <p>Loading partner options...</p>}
-            {partnerError && <p className="error">{partnerError}</p>}
-            <div className="modal-grid">
-              {partnerOptions.map((option) => (
-                <button
-                  key={option.id}
-                  className={
-                    selectedPartner?.id === option.id
-                      ? 'modal-card selected'
-                      : 'modal-card'
-                  }
-                  onClick={() => setSelectedPartner(option)}
-                  type="button"
-                >
-                  <img
-                    src={getCardImage(option)}
-                    alt={option.name}
-                    loading="lazy"
-                  />
-                  <span>{option.name}</span>
-                </button>
-              ))}
-            </div>
-            <div className="modal-actions">
-              <button className="primary" onClick={closePartnerModal}>
-                Done
-              </button>
-            </div>
-          </div>
-        </div>
+        <PartnerModal
+          partnerCard={partnerCard}
+          partnerLoading={partnerLoading}
+          partnerError={partnerError}
+          partnerOptions={partnerOptions}
+          selectedPartner={selectedPartner}
+          onSelectPartner={setSelectedPartner}
+          onClose={closePartnerModal}
+          getCardImage={getCardImage}
+        />
       )}
 
       {optionsOpen && (
-        <div className="modal-backdrop">
-          <div className="modal">
-            <div className="modal-header">
-              <div>
-                <h2>Draft options</h2>
-                <p>Control what commanders can appear.</p>
-              </div>
-              <button className="ghost" onClick={() => setOptionsOpen(false)}>
-                Close
-              </button>
-            </div>
-            <div className="option-row">
-              <div>
-                <h3>Partner-only pool</h3>
-                <p>
-                  Limit to Partner, Partner with, Partner—X, Background, Friends
-                  forever, and Doctor&#39;s companion commanders.
-                </p>
-              </div>
-              <label className="switch">
-                <input
-                  type="checkbox"
-                  checked={partnerOnly}
-                  onChange={(event) => setPartnerOnly(event.target.checked)}
-                />
-                <span className="slider" aria-hidden="true" />
-              </label>
-            </div>
-            <div className="modal-actions">
-              <button className="primary" onClick={() => setOptionsOpen(false)}>
-                Done
-              </button>
-            </div>
-          </div>
-        </div>
+        <OptionsModal
+          partnerOnly={partnerOnly}
+          colorBans={colorBans}
+          monoChoiceEnabled={monoChoiceEnabled}
+          rerollsEnabled={rerollsEnabled}
+          onTogglePartnerOnly={setPartnerOnly}
+          onToggleColorBans={setColorBans}
+          onToggleMonoChoice={setMonoChoiceEnabled}
+          onToggleRerolls={setRerollsEnabled}
+          onClose={() => setOptionsOpen(false)}
+        />
       )}
     </div>
   )

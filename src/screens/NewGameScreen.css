@@ -1,0 +1,39 @@
+.add-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+input {
+  background: rgba(10, 12, 18, 0.6);
+  border: 1px solid rgba(201, 163, 107, 0.4);
+  padding: 0.8rem 1rem;
+  border-radius: 12px;
+  color: #f8f2e9;
+  font-family: inherit;
+}
+
+.player-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.8rem;
+}
+
+.player-list li {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.8rem 1rem;
+  background: rgba(12, 14, 20, 0.8);
+  border-radius: 16px;
+  border: 1px solid rgba(201, 163, 107, 0.25);
+}
+
+.drag {
+  color: rgba(248, 242, 233, 0.4);
+  font-size: 1.2rem;
+}

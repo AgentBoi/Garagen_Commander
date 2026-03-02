@@ -1,0 +1,20 @@
+.history-list {
+  display: grid;
+  gap: 2rem;
+}
+
+.history-round {
+  background: rgba(12, 14, 20, 0.6);
+  border-radius: 10px;
+  padding: 1.6rem;
+  border: 1px solid rgba(201, 163, 107, 0.2);
+}
+
+.round-meta {
+  display: flex;
+  justify-content: space-between;
+  text-transform: uppercase;
+  letter-spacing: 0.2rem;
+  font-size: 0.65rem;
+  color: rgba(248, 242, 233, 0.6);
+}
