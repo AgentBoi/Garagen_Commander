@@ -7,6 +7,7 @@ import SummaryScreen from './screens/SummaryScreen'
 import HistoryScreen from './screens/HistoryScreen'
 import ColorBanScreen from './screens/ColorBanScreen'
 import MonoBanScreen from './screens/MonoBanScreen'
+import ChaosScreen from './screens/ChaosScreen'
 import PartnerModal from './components/PartnerModal'
 import OptionsModal from './components/OptionsModal'
 import { emptySlots, shuffle, getCardImage } from './utils/cardUtils'
@@ -394,6 +395,7 @@ export default function App() {
       {screen === 'home' && (
         <HomeScreen
           onNewGame={() => setScreen('new')}
+          onChaos={() => setScreen('chaos')}
           onHistory={() => setScreen('history')}
         />
       )}
@@ -424,6 +426,8 @@ export default function App() {
           remainingPlayers={players.length - colorBanIndex}
         />
       )}
+
+      {screen === 'chaos' && <ChaosScreen />}
 
       {screen === 'mono-bans' && monoBanPlayer && (
         <MonoBanScreen

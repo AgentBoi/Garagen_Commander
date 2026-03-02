@@ -27,7 +27,6 @@ export default function HistoryScreen({
         {history.map((round) => (
           <div className="history-round" key={round.id}>
             <div className="round-meta">
-              <span>Round</span>
               <span>
                 {new Date(round.startedAt).toLocaleString('en-US', {
                   dateStyle: 'medium',
