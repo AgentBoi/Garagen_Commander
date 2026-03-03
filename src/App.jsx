@@ -78,13 +78,8 @@ export default function App() {
   }, [screen])
 
   const currentPlayer = players[currentIndex]
-  const partnerInfo =
-    selectedIndex !== null ? getPartnerInfo(slots[selectedIndex]?.card) : null
-  const requiresPartner = Boolean(partnerInfo)
   const canConfirm =
-    selectedIndex !== null &&
-    slots[selectedIndex]?.status === 'revealed' &&
-    (!requiresPartner || selectedPartner)
+    selectedIndex !== null && slots[selectedIndex]?.status === 'revealed'
 
   const historyEmpty = history.length === 0
 

@@ -3,6 +3,9 @@ import { getOracleText, getTypeLine } from './cardUtils'
 export const normalizePartnerWithName = (name) =>
   name.replace(/\s*\([^)]*\)\s*$/, '').replace(/[.]+$/, '').trim()
 
+export const normalizePartnerDashLabel = (label) =>
+  label.replace(/\s*\([^)]*\)\s*$/, '').trim()
+
 export const getPartnerInfo = (card) => {
   const oracle = getOracleText(card)
   if (!oracle) return null
@@ -12,7 +15,10 @@ export const getPartnerInfo = (card) => {
   }
   const partnerDash = oracle.match(/Partner\s*[\u2014-]\s*([^\n]+)/i)
   if (partnerDash) {
-    return { type: 'partner-dash', label: partnerDash[1].trim() }
+    return {
+      type: 'partner-dash',
+      label: normalizePartnerDashLabel(partnerDash[1].trim()),
+    }
   }
   if (/Choose a Background/i.test(oracle)) {
     return { type: 'choose-background' }
@@ -81,12 +87,12 @@ export const fetchPartnerOptions = async (card) => {
   }
 
   if (info.type === 'partner-dash') {
-    const label = info.label.replace(/"/g, '')
+    const label = normalizePartnerDashLabel(info.label).replace(/"/g, '')
     if (/friends\s+forever/i.test(label)) {
       return fetchAllCards('o:"Friends forever"')
     }
     return fetchAllCards(
-      `o:"Partner\u2014${label}" or o:"Partner - ${label}" is:commander`
+      `o:"Partner\u2014${label}" is:commander`
     )
   }
 

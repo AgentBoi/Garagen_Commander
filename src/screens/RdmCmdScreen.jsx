@@ -73,23 +73,7 @@ export default function RdmCmdScreen({
                     aria-label="Reroll this card"
                     type="button"
                   >
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                      <path
-                        d="M20 12a8 8 0 1 1-2.35-5.65"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                      />
-                      <path
-                        d="M20 5v5h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
+                    <i className="bi bi-arrow-clockwise" aria-hidden="true" />
                   </button>
                 )}
                 {slot.status === 'revealed' && slotPartnerInfo && (
@@ -99,7 +83,7 @@ export default function RdmCmdScreen({
                     aria-label="Choose partner"
                     type="button"
                   >
-                    !
+                    <i className="bi bi-plus" aria-hidden="true" />
                   </button>
                 )}
               </div>
