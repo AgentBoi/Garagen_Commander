@@ -21,6 +21,13 @@ import colorlessMana from './assets/mana_symbols/colorless_mana.png'
 
 const STORAGE_KEY = 'random-commander-history-v1'
 
+/**
+ * App component manages the overall state and screen flow of the application.
+ * It handles player management, game setup, the drafting process, and history tracking.
+ * The component uses local storage to persist past game history and provides options for customizing the draft experience,
+ * such as color bans and partner-only commanders.
+ * @returns {JSX.Element} The rendered App component with conditional screens and modals based on the current state.
+ */
 export default function App() {
   const [screen, setScreen] = useState('home')
   const [players, setPlayers] = useState([])
@@ -422,7 +429,7 @@ export default function App() {
         />
       )}
 
-      {screen === 'chaos' && <ChaosScreen />}
+      {screen === 'chaos' && <ChaosScreen onOpenOptions={() => setOptionsOpen(true)} />}
 
       {screen === 'mono-bans' && monoBanPlayer && (
         <MonoBanScreen
