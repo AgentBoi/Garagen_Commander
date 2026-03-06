@@ -1,0 +1,179 @@
+{
+  "keywords": [
+    {
+      "name": "Flying",
+      "description": "This creatures can't be blocked except by creatures with flying or reach.",
+      "weight": 0.8
+    },
+    {
+      "name": "First Strike",
+      "description": "This creature deals combat damage before creatures without first strike.",
+      "weight": 1
+    },
+    {
+      "name": "Double Strike",
+      "description": "This creature deals combat damage twice during each combat phase.",
+      "weight": 0.5
+    },
+    {
+      "name": "Deathtouch",
+      "description": "Any amount of damage dealt by this creature to another creature is lethal.",
+      "weight": 0.9
+    },
+    {
+      "name": "Trample",
+      "description": "If this creature is blocked, you may have it deal excess combat damage to the defending player or planeswalker.",
+      "weight": 1
+    },
+    {
+      "name": "Vigilance",
+      "description": "This creature doesn't tap to attack.",
+      "weight": 1
+    },
+    {
+      "name": "Menace",
+      "description": "This creature can't be blocked except by two or more creatures.",
+      "weight": 1
+    },
+    {
+      "name": "Reach",
+      "description": "This creature can block creatures with flying.",
+      "weight": 1
+    },
+    {
+      "name": "Lifelink",
+      "description": "When this creature deals damage, you gain that much life.",
+      "weight": 0.8
+    },
+    {
+      "name": "Haste",
+      "description": "This creature can attack and tap during the turn it comes into play.",
+      "weight": 1
+    },
+    {
+      "name": "Hexproof",
+      "description": "This creature can't be targeted by spells or abilities controlled by your opponents.",
+      "weight": 0.6
+    },
+    {
+      "name": "Indestructible",
+      "description": "This creature can't be destroyed by damage or effects that say 'destroy'.",
+      "weight": 0.4
+    },
+    {
+      "name": "Ward 2",
+      "description": "Opponents must pay 2 colorless, to target this creature.",
+      "weight": 1
+    },
+    {
+      "name": "Skulk",
+      "description": "This creature can't be blocked by creatures with greater power.",
+      "weight": 1
+    },
+    {
+      "name": "Shadow",
+      "description": "This creature can only be blocked and block by other creatures with Shadow.",
+      "weight": 0.5
+    },
+    {
+      "name": "Bushido 1",
+      "description": "This creature get +1/+1 if it is blocking or blocked.",
+      "weight": 1
+    },
+    {
+      "name": "Prowess",
+      "description": "This creature gets +1/+1 until end of turn whenever a noncreature spell is cast.",
+      "weight": 0.4
+    },
+    {
+      "name": "Melee",
+      "description": "This creature gets +1/+1 until end of turn for each opponent you attack this turn.",
+      "weight": 1
+    },
+    {
+      "name": "Infect",
+      "description": "This creature deals damage to creatures in the form of -1/-1 counters and to players in the form of poison counters.",
+      "weight": 0.2
+    },
+    {
+      "name": "Exalted",
+      "description": "Whenever a creature you control attacks alone, that creature gets +1/+1 until end of turn for each permanent with exalted under your control. ",
+      "weight": 0.8
+    },
+    {
+      "name": "Convoke",
+      "description": "Your creatures can help cast this spell. Each creature you tap while casting this spell pays for 1 or one mana of that creature's color.",
+      "weight": 0.7
+    },
+    {
+      "name": "Evoke 2",
+      "description": "You may cast this spell for 2 colorless. If you do, it's sacrificed when it enters the battlefield.",
+      "weight": 0.6
+    },
+    {
+      "name": "Fabricate 2",
+      "description": "When this creature enters the battlefield, put two +1/+1 counters on it or create two 1/1 colorless Servo artifact creature token.",
+      "weight": 0.4
+    },
+    {
+      "name": "Undying",
+      "description": "When this creature dies, if it had no +1/+1 counters on it, return it to its owner's hand.",
+      "weight": 0.3
+    },
+    {
+      "name": "Persist",
+      "description": "When this creature dies, if it had no -1/-1 counters on it, return it to its owner's hand.",
+      "weight": 0.3
+    },
+    {
+      "name": "Annihilator 1",
+      "description": "Whenever this creature attacks, defending player sacrifices a permanent.",
+      "weight": 0.05
+    },
+    {
+      "name": "Wither",
+      "description": "This creature deals damage to creatures in the form of -1/-1 counters.",
+      "weight": 0.4
+    },
+    {
+      "name": "Cascade",
+      "description": "When you cast this spell, exile cards from the top of your library until you exile a nonland card that costs less. You may cast that card without paying its mana cost. Put the exiled cards on the bottom of your library in a random order.",
+      "weight": 0.05
+    },
+    {
+      "name": "Defender",
+      "description": "This creature can't attack.",
+      "weight": 0.4
+    },
+    {
+      "name": "Shroud",
+      "description": "This creature can't be targeted by spells or abilities.",
+      "weight": 0.5
+    },
+    {
+      "name": "Flash",
+      "description": "You may cast this creature any time you could cast an instant.",
+      "weight": 0.7
+    },
+    {
+      "name": "Toxic 1",
+      "description": "When this creature deals combat damage to a player, that player gets a poison counter.",
+      "weight": 0.2
+    },
+    {
+      "name": "Backup 1",
+      "description": "When this creature enters the battlefield, target creature you control gets +1/+1 and all printed abilities of this creature until end of turn.",
+      "weight": 0.1
+    },
+    {
+      "name": "Firebending 1",
+      "description": "When this creature attacks add 1 red mana to your mana pool.",
+      "weight": 0.2
+    },
+    {
+      "name": "Offspring 3",
+      "description": "When you cast this spell you may pay 3. If you do, when it enters create a 1/1 token that's a copy of this creature",
+      "weight": 0.2
+    }
+  ]
+}

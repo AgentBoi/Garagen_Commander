@@ -10,6 +10,7 @@ import MonoBanScreen from './screens/MonoBanScreen'
 import ChaosScreen from './screens/ChaosScreen'
 import PartnerModal from './components/PartnerModal'
 import OptionsModal from './components/OptionsModal'
+import ChaosOptionsModal from './components/ChaosOptionsModal'
 import { emptySlots, shuffle, getCardImage } from './utils/cardUtils'
 import { getPartnerInfo, fetchPartnerOptions } from './utils/partnerUtils'
 import whiteMana from './assets/mana_symbols/white_mana.png'
@@ -35,10 +36,12 @@ export default function App() {
   const [dragIndex, setDragIndex] = useState(null)
   const [history, setHistory] = useState([])
   const [optionsOpen, setOptionsOpen] = useState(false)
+  const [chaosOptionsOpen, setChaosOptionsOpen] = useState(false)
   const [partnerOnly, setPartnerOnly] = useState(false)
   const [colorBans, setColorBans] = useState(false)
   const [monoChoiceEnabled, setMonoChoiceEnabled] = useState(false)
   const [rerollsEnabled, setRerollsEnabled] = useState(true)
+  const [chaosDebugEnabled, setChaosDebugEnabled] = useState(false)
   const [colorBanIndex, setColorBanIndex] = useState(0)
   const [playerBans, setPlayerBans] = useState({})
   const [monoBanIndex, setMonoBanIndex] = useState(0)
@@ -429,7 +432,12 @@ export default function App() {
         />
       )}
 
-      {screen === 'chaos' && <ChaosScreen onOpenOptions={() => setOptionsOpen(true)} />}
+      {screen === 'chaos' && (
+        <ChaosScreen
+          onOpenOptions={() => setChaosOptionsOpen(true)}
+          debugEnabled={chaosDebugEnabled}
+        />
+      )}
 
       {screen === 'mono-bans' && monoBanPlayer && (
         <MonoBanScreen
@@ -506,6 +514,14 @@ export default function App() {
           onToggleMonoChoice={setMonoChoiceEnabled}
           onToggleRerolls={setRerollsEnabled}
           onClose={() => setOptionsOpen(false)}
+        />
+      )}
+
+      {chaosOptionsOpen && (
+        <ChaosOptionsModal
+          debugEnabled={chaosDebugEnabled}
+          onToggleDebug={setChaosDebugEnabled}
+          onClose={() => setChaosOptionsOpen(false)}
         />
       )}
     </div>
