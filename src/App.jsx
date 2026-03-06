@@ -13,6 +13,7 @@ import OptionsModal from './components/OptionsModal'
 import ChaosOptionsModal from './components/ChaosOptionsModal'
 import { emptySlots, shuffle, getCardImage } from './utils/cardUtils'
 import { getPartnerInfo, fetchPartnerOptions } from './utils/partnerUtils'
+import { fetchRandomCard } from './utils/scryfallUtils'
 import whiteMana from './assets/mana_symbols/white_mana.png'
 import blueMana from './assets/mana_symbols/blue_mana.png'
 import blackMana from './assets/mana_symbols/black_mana.png'
@@ -197,15 +198,10 @@ export default function App() {
       const activeMonoBan = monoChoiceEnabled
         ? playerMonoBans[currentPlayer?.id] ?? false
         : false
-      const response = await fetch(
-        `https://api.scryfall.com/cards/random?q=${encodeURIComponent(
-          getCommanderQuery(activeBans) + (activeMonoBan ? ' -id<=1' : '')
-        )}`
-      )
-      if (!response.ok) {
-        throw new Error('Failed to fetch a card.')
-      }
-      const data = await response.json()
+
+      const query =
+        getCommanderQuery(activeBans) + (activeMonoBan ? ' -id<=1' : '')
+      const data = await fetchRandomCard(query)
       setSlots((prev) =>
         prev.map((slot, i) =>
           i === index ? { status: 'revealed', card: data } : slot

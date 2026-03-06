@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import './ChaosScreen.css'
 import { shuffle } from '../utils/cardUtils'
 import creatureKeywords from '../utils/creature_keywords.json'
+import { fetchRandomCreatureTokenEffectText } from '../utils/scryfallUtils'
 
 const EFFECTS = {
   1: 'Each player draws a card',
@@ -188,13 +189,16 @@ export default function ChaosScreen({
   }
 
   /**
-   * Get the effect text for a given roll. For certain rolls (like 9, 11, and 12), the effect text includes dynamic information based on a random player or keyword.
+   * Get the effect text for a given roll. For certain rolls, the effect text includes dynamic information based on a random player or keyword.
    * This function handles those special cases and returns the appropriate text to be displayed after a roll.
    * @param {number} roll - The value of the roll (1-20).
    * @param {Object} roller - The player object representing the current roller, used for effects that depend on the roller's identity.
    * @returns {string} The effect text corresponding to the roll.
    */
   const getEffectText = (roll, roller) => {
+    if (roll === 8) {
+      return EFFECTS[8]
+    }
     if (roll === 9) {
       const chosen = pickRandomPlayer()
       if (!chosen) return EFFECTS[9]
@@ -343,22 +347,39 @@ export default function ChaosScreen({
 
     // Compute the outcome up-front so we can animate to the exact number.
     const value = Number.isInteger(forcedValue) ? forcedValue : rollD20()
+
+    const getEffectTextAsync = async (roll) => {
+      if (roll === 8) return fetchRandomCreatureTokenEffectText(EFFECTS[8])
+      return getEffectText(roll, roller)
+    }
+
     const outcome =
       value === 20
         ? (() => {
           const bonusOne = rollBonus()
           const bonusTwo = rollBonus()
-          const bonusEffects = [
-            `${bonusOne}: ${getEffectText(bonusOne, roller)}`,
-            `${bonusTwo}: ${getEffectText(bonusTwo, roller)}`,
-          ].join('\n')
           return {
             value: 20,
             bonusRolls: [bonusOne, bonusTwo],
-            effectText: `Bonus rolls: ${bonusOne} and ${bonusTwo}.\n${bonusEffects}`,
           }
         })()
         : { value, effectText: getEffectText(value, roller), bonusRolls: [] }
+
+    const effectTextPromise =
+      value === 20
+        ? (async () => {
+          const [bonusOne, bonusTwo] = outcome.bonusRolls
+          const [bonusOneText, bonusTwoText] = await Promise.all([
+            getEffectTextAsync(bonusOne),
+            getEffectTextAsync(bonusTwo),
+          ])
+          return [
+            `Bonus rolls: ${bonusOne} and ${bonusTwo}.`,
+            `${bonusOne}: ${bonusOneText}`,
+            `${bonusTwo}: ${bonusTwoText}`,
+          ].join('\n')
+        })()
+        : getEffectTextAsync(value)
 
     const indexInBase = base.indexOf(outcome.value)
     const targetIndex = indexInBase + base.length * (loops - 1)
@@ -374,7 +395,9 @@ export default function ChaosScreen({
 
     queueTimeout(() => {
       setResult(outcome.value)
-      setEffectText(outcome.effectText)
+      effectTextPromise
+        .then((text) => setEffectText(text))
+        .catch(() => setEffectText(getEffectText(value, roller)))
       setRollKey((prev) => prev + 1)
       setRolling(false)
 

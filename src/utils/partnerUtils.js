@@ -1,4 +1,9 @@
 import { getOracleText, getTypeLine } from './cardUtils'
+import {
+  fetchAllCards,
+  fetchNamedCardExact,
+  fetchNamedCardFuzzy,
+} from './scryfallUtils'
 
 export const normalizePartnerWithName = (name) =>
   name.replace(/\s*\([^)]*\)\s*$/, '').replace(/[.]+$/, '').trim()
@@ -38,22 +43,7 @@ export const getPartnerInfo = (card) => {
   return null
 }
 
-export const fetchAllCards = async (query) => {
-  const results = []
-  let url = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(
-    query
-  )}&unique=cards`
-  while (url) {
-    const response = await fetch(url)
-    const data = await response.json()
-    if (!response.ok) {
-      throw new Error(data?.details || 'Failed to fetch cards.')
-    }
-    results.push(...data.data)
-    url = data.has_more ? data.next_page : null
-  }
-  return results
-}
+export { fetchAllCards }
 
 export const fetchPartnerOptions = async (card) => {
   const info = getPartnerInfo(card)
@@ -61,29 +51,20 @@ export const fetchPartnerOptions = async (card) => {
 
   if (info.type === 'partner-with') {
     const targetName = normalizePartnerWithName(info.name)
-    const response = await fetch(
-      `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(
-        targetName
-      )}`
-    )
-    const data = await response.json()
-    if (!response.ok) {
-      const fallback = await fetch(
-        `https://api.scryfall.com/cards/named?fuzzy=${encodeURIComponent(
-          targetName
-        )}`
-      )
-      const fallbackData = await fallback.json()
+
+    try {
+      const data = await fetchNamedCardExact(targetName)
+      return [data]
+    } catch {
+      const fallbackData = await fetchNamedCardFuzzy(targetName)
       if (
-        !fallback.ok ||
         !fallbackData?.name ||
         fallbackData.name.toLowerCase() !== targetName.toLowerCase()
       ) {
-        throw new Error(fallbackData?.details || 'Failed to fetch partner.')
+        throw new Error('Failed to fetch partner.')
       }
       return [fallbackData]
     }
-    return [data]
   }
 
   if (info.type === 'partner-dash') {
