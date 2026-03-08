@@ -1,4 +1,5 @@
 import './RdmCmdScreen.css'
+import Magnet from '../components/ui/Magnet'
 
 export default function RdmCmdScreen({
   currentPlayer,
@@ -46,25 +47,27 @@ export default function RdmCmdScreen({
           if (slot.status === 'error') backLabel = 'Error'
           return (
             <div className="card-stack" key={`slot-${index}`}>
-              <button
-                className={classes.join(' ')}
-                onClick={() => onSlotClick(index)}
-                type="button"
-              >
-                <div className="card-flip">
-                  <div className="card-face card-back">
-                    <span>{backLabel}</span>
+              <Magnet padding={50} magnetStrength={5} wrapperClassName="card-magnet">
+                <button
+                  className={classes.join(' ')}
+                  onClick={() => onSlotClick(index)}
+                  type="button"
+                >
+                  <div className="card-flip">
+                    <div className="card-face card-back">
+                      <span>{backLabel}</span>
+                    </div>
+                    <div className="card-face card-front">
+                      {slot.status === 'revealed' && image && (
+                        <img src={image} alt={slot.card?.name ?? 'Commander'} />
+                      )}
+                      {slot.status === 'revealed' && !image && (
+                        <span>{slot.card?.name}</span>
+                      )}
+                    </div>
                   </div>
-                  <div className="card-face card-front">
-                    {slot.status === 'revealed' && image && (
-                      <img src={image} alt={slot.card?.name ?? 'Commander'} />
-                    )}
-                    {slot.status === 'revealed' && !image && (
-                      <span>{slot.card?.name}</span>
-                    )}
-                  </div>
-                </div>
-              </button>
+                </button>
+              </Magnet>
               <div className="card-tools">
                 {rerollsEnabled && (
                   <button

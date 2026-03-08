@@ -13,6 +13,10 @@
   width: min(350px, 100%);
 }
 
+.card-magnet {
+  width: 100%;
+}
+
 .card-tools {
   display: flex;
   gap: 0.6rem;
