@@ -516,6 +516,7 @@ export default function ChaosScreen({
         <>
           <div className="add-row">
             <input
+              className="nameInput"
               type="text"
               placeholder="Player name"
               value={nameInput}

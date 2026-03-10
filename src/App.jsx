@@ -383,7 +383,7 @@ export default function App() {
         >
           <div>
             <p className="eyebrow">Magic: The Gathering</p>
-            <h1>Garagen Commander</h1>
+            <h1 className="title">Garagen Commander</h1>
           </div>
         </button>
         {screen !== 'home' && (

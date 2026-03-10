@@ -32,6 +32,7 @@ export default function NewGameScreen({
 
       <div className="add-row">
         <input
+          className="nameInput"
           type="text"
           placeholder="Player name"
           value={nameInput}
