@@ -6,11 +6,77 @@
   justify-items: center;
 }
 
+.card-row.animating-out {
+  pointer-events: none;
+}
+
 .card-stack {
   display: grid;
   justify-items: center;
   gap: 0.75rem;
   width: min(350px, 100%);
+}
+
+.card-stack {
+  --rdm-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.card-stack.fly-in {
+  animation: rdm-fly-in 560ms var(--rdm-ease) both;
+  animation-delay: var(--fly-delay, 0ms);
+}
+
+.card-stack.fly-out-up {
+  animation: rdm-fly-out-up 420ms var(--rdm-ease) both;
+}
+
+.card-stack.fly-out-down {
+  animation: rdm-fly-out-down 420ms var(--rdm-ease) both;
+}
+
+@keyframes rdm-fly-in {
+  from {
+    transform: translate3d(0, 70px, 0);
+    opacity: 0;
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+}
+
+@keyframes rdm-fly-out-up {
+  from {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+  to {
+    transform: translate3d(0, -140px, 0);
+    opacity: 0;
+  }
+}
+
+@keyframes rdm-fly-out-down {
+  from {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+  to {
+    transform: translate3d(0, 140px, 0);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-stack.fly-in,
+  .card-stack.fly-out-up,
+  .card-stack.fly-out-down {
+    animation: none;
+  }
+}
+
+.card-magnet {
+  width: 100%;
 }
 
 .card-tools {
