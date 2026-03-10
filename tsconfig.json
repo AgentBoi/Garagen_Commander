@@ -10,9 +10,8 @@
     "checkJs": false,
     "noEmit": true,
 
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["src", "vite.config.js"],
