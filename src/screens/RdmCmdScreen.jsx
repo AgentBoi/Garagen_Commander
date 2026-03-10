@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useRef, useState } from 'react'
 import './RdmCmdScreen.css'
 import Magnet from '../components/ui/Magnet'
 
@@ -20,8 +21,48 @@ export default function RdmCmdScreen({
 }) {
   if (!currentPlayer) return null
 
+  const [isAnimatingOut, setIsAnimatingOut] = useState(false)
+  const [exitIndex, setExitIndex] = useState(null)
+  const timeoutRef = useRef(0)
+
+  const prefersReducedMotion = useMemo(() => {
+    if (typeof window === 'undefined') return false
+    return window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false
+  }, [])
+
+  useEffect(() => {
+    setIsAnimatingOut(false)
+    setExitIndex(null)
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+      timeoutRef.current = 0
+    }
+  }, [currentIndex, currentPlayer?.id])
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    }
+  }, [])
+
+  const handleConfirmPick = () => {
+    if (!canConfirm || isAnimatingOut) return
+    if (prefersReducedMotion) {
+      onConfirmPick()
+      return
+    }
+
+    const animationMs = 420
+    setExitIndex(selectedIndex)
+    setIsAnimatingOut(true)
+    timeoutRef.current = setTimeout(() => {
+      timeoutRef.current = 0
+      onConfirmPick()
+    }, animationMs)
+  }
+
   return (
-    <section className="panel">
+    <section className={['panel', isAnimatingOut ? 'rdmcmd-animating' : ''].join(' ')}>
       <div className="panel-header">
         <div>
           <h2>{currentPlayer.name}</h2>
@@ -34,7 +75,7 @@ export default function RdmCmdScreen({
 
       {error && <p className="error">{error}</p>}
 
-      <div className="card-row">
+      <div className={['card-row', isAnimatingOut ? 'animating-out' : ''].join(' ')}>
         {slots.map((slot, index) => {
           const image = getCardImage(slot.card)
           const slotPartnerInfo = getPartnerInfo(slot.card)
@@ -45,12 +86,31 @@ export default function RdmCmdScreen({
           let backLabel = 'Tap to reveal'
           if (slot.status === 'loading') backLabel = 'Summoning'
           if (slot.status === 'error') backLabel = 'Error'
+
+          const stackClasses = ['card-stack']
+          if (isAnimatingOut) {
+            if (exitIndex === index) stackClasses.push('fly-out-up')
+            else stackClasses.push('fly-out-down')
+          } else {
+            stackClasses.push('fly-in')
+          }
+
           return (
-            <div className="card-stack" key={`slot-${index}`}>
-              <Magnet padding={50} magnetStrength={5} wrapperClassName="card-magnet">
+            <div
+              className={stackClasses.join(' ')}
+              style={{ '--fly-delay': `${index * 80}ms` }}
+              key={`slot-${currentIndex}-${index}`}
+            >
+              <Magnet
+                padding={50}
+                magnetStrength={5}
+                wrapperClassName="card-magnet"
+                disabled={isAnimatingOut}
+              >
                 <button
                   className={classes.join(' ')}
                   onClick={() => onSlotClick(index)}
+                  disabled={isAnimatingOut}
                   type="button"
                 >
                   <div className="card-flip">
@@ -74,6 +134,7 @@ export default function RdmCmdScreen({
                     className="reroll"
                     onClick={() => onReroll(index)}
                     aria-label="Reroll this card"
+                    disabled={isAnimatingOut}
                     type="button"
                   >
                     <i className="bi bi-arrow-clockwise" aria-hidden="true" />
@@ -84,6 +145,7 @@ export default function RdmCmdScreen({
                     className="partner"
                     onClick={() => onOpenPartnerModal(slot.card)}
                     aria-label="Choose partner"
+                    disabled={isAnimatingOut}
                     type="button"
                   >
                     <i className="bi bi-plus" aria-hidden="true" />
@@ -99,7 +161,11 @@ export default function RdmCmdScreen({
       </div>
 
       <div className="actions">
-        <button className="primary" onClick={onConfirmPick} disabled={!canConfirm}>
+        <button
+          className="primary"
+          onClick={handleConfirmPick}
+          disabled={!canConfirm || isAnimatingOut}
+        >
           Select Commander
         </button>
       </div>
