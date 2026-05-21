@@ -19,7 +19,7 @@ const EFFECTS = {
   12: 'Your creatures gain a random keyword until end of turn', // special case! => see getEffectText
   13: 'Each player may cast a spell from their hand for free this round',
   14: 'Exile the top card of each library. You may cast it this turn (you may spend any color of mana to cast those cards)',
-  15: 'Each player discards their hand, then draws that many cards',
+  15: 'Each player shuffles their hand into their library, then draws that many cards',
   16: 'Current player takes an extra turn after this one',
   17: 'All creatures must attack if possible and can not attack you until your next turn',
   18: 'Each player reveals their hand; you may cast one spell from it without paying its cost',
@@ -374,7 +374,7 @@ export default function ChaosScreen({
             getEffectTextAsync(bonusTwo),
           ])
           return [
-            `Bonus rolls: ${bonusOne} and ${bonusTwo}.`,
+            `(NAT 20!) Two bonus rolls: ${bonusOne} and ${bonusTwo}.`,
             `${bonusOne}: ${bonusOneText}`,
             `${bonusTwo}: ${bonusTwoText}`,
           ].join('\n')
