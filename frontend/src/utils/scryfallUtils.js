@@ -1,4 +1,4 @@
-const SCRYFALL_BASE_URL = 'https://api.scryfall.com'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 
 const RANDOM_CREATURE_TOKEN_QUERY = 'type:creature tou>0 pow>0 is:token'
 
@@ -72,38 +72,46 @@ const fetchScryfallJson = async (url) => {
   }
 
   if (!response.ok) {
-    throw new Error(data?.details || 'Failed to fetch from Scryfall.')
+    throw new Error(
+      data?.details || data?.message || 'Failed to fetch from Scryfall.'
+    )
   }
 
   return data
 }
 
+const buildApiUrl = (path, params = {}) => {
+  const url = new URL(API_BASE_URL + path, window.location.origin)
+
+  Object.entries(params).forEach(([key, value]) => {
+    url.searchParams.set(key, value)
+  })
+
+  return url.toString()
+}
+
 export const fetchRandomCard = async (query) => {
-  const url = `${SCRYFALL_BASE_URL}/cards/random?q=${encodeURIComponent(query)}`
-  return fetchScryfallJson(url)
+  return fetchScryfallJson(
+    buildApiUrl('/scryfall/cards/random', { query })
+  )
 }
 
 export const fetchNamedCardExact = async (name) => {
-  const url = `${SCRYFALL_BASE_URL}/cards/named?exact=${encodeURIComponent(name)}`
-  return fetchScryfallJson(url)
+  return fetchScryfallJson(
+    buildApiUrl('/scryfall/cards/named/exact', { name })
+  )
 }
 
 export const fetchNamedCardFuzzy = async (name) => {
-  const url = `${SCRYFALL_BASE_URL}/cards/named?fuzzy=${encodeURIComponent(name)}`
-  return fetchScryfallJson(url)
+  return fetchScryfallJson(
+    buildApiUrl('/scryfall/cards/named/fuzzy', { name })
+  )
 }
 
 export const fetchAllCards = async (query) => {
-  const results = []
-  let url = `${SCRYFALL_BASE_URL}/cards/search?q=${encodeURIComponent(query)}&unique=cards`
-
-  while (url) {
-    const data = await fetchScryfallJson(url)
-    results.push(...(data?.data ?? []))
-    url = data?.has_more ? data.next_page : null
-  }
-
-  return results
+  return fetchScryfallJson(
+    buildApiUrl('/scryfall/cards/search', { query })
+  )
 }
 
 // Convenience helper used by Chaos mode (roll 8).

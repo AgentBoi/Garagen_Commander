@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# Java / Spring Boot
+backend/target/
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
